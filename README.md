@@ -80,7 +80,6 @@ require("cubby").setup({
   notify = true,                             -- Show notifications
   trailing_marker = "--note",                -- Filename suffix marker
   exclude_dirs = { ".git", ".obsidian" },   -- Directories to exclude from picker
-  confirm_on_cross_fs = false,               -- Confirm cross-filesystem moves
   allow_non_md = true,                       -- Allow sorting non-markdown files
 
   -- Recent Destinations (for CreateNote and SortNote)
