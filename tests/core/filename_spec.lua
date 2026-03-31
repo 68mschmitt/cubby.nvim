@@ -61,20 +61,20 @@ describe("filename.extract_label_and_remainder", function()
     end)
 end)
 
-describe("filename.build_sorted_filename_preserving_original", function()
-    it("combines new label with original label", function()
-        local result = filename.build_sorted_filename_preserving_original(
+describe("filename.build_filename_for_sort", function()
+    it("replaces original label with new label", function()
+        local result = filename.build_filename_for_sort(
             "project",
             "old-label-2025-10-08_11-07-15--note.md",
             "2025-10-08_11-07-15",
             ".md",
             "--note"
         )
-        assert.equals("project-old-label-2025-10-08_11-07-15--note.md", result)
+        assert.equals("project-2025-10-08_11-07-15--note.md", result)
     end)
 
     it("uses only new label when original has no label", function()
-        local result = filename.build_sorted_filename_preserving_original(
+        local result = filename.build_filename_for_sort(
             "project",
             "2025-10-08_09-17-33--note.md",
             "2025-10-08_09-17-33",
@@ -85,7 +85,7 @@ describe("filename.build_sorted_filename_preserving_original", function()
     end)
 
     it("preserves original label when no new label provided (nil)", function()
-        local result = filename.build_sorted_filename_preserving_original(
+        local result = filename.build_filename_for_sort(
             nil,
             "old-label-2025-10-08_11-07-15--note.md",
             "2025-10-08_11-07-15",
@@ -96,7 +96,7 @@ describe("filename.build_sorted_filename_preserving_original", function()
     end)
 
     it("preserves original label when no new label provided (empty)", function()
-        local result = filename.build_sorted_filename_preserving_original(
+        local result = filename.build_filename_for_sort(
             "",
             "old-label-2025-10-08_11-07-15--note.md",
             "2025-10-08_11-07-15",
@@ -107,7 +107,7 @@ describe("filename.build_sorted_filename_preserving_original", function()
     end)
 
     it("uses timestamp-only when neither label is present", function()
-        local result = filename.build_sorted_filename_preserving_original(
+        local result = filename.build_filename_for_sort(
             nil,
             "2025-10-08_09-17-33--note.md",
             "2025-10-08_09-17-33",
@@ -115,6 +115,19 @@ describe("filename.build_sorted_filename_preserving_original", function()
             "--note"
         )
         assert.equals("2025-10-08_09-17-33--note.md", result)
+    end)
+
+    it("does not chain labels on repeated sorts", function()
+        -- Simulate a file that was already sorted with label "first"
+        local result = filename.build_filename_for_sort(
+            "second",
+            "first-2025-10-08_11-07-15--note.md",
+            "2025-10-08_11-07-15",
+            ".md",
+            "--note"
+        )
+        -- Should replace, not produce "second-first-timestamp"
+        assert.equals("second-2025-10-08_11-07-15--note.md", result)
     end)
 end)
 
@@ -152,5 +165,15 @@ describe("filename.ensure_unique", function()
         fs.write_file(tmpdir .. "/test--note.txt", "")
         local result = filename.ensure_unique(tmpdir, "test--note.txt")
         assert.equals("test--note--2.txt", result)
+    end)
+
+    it("returns nil when max attempts exceeded", function()
+        -- Create file for the base name and the only collision variant
+        fs.write_file(tmpdir .. "/test--note.md", "")
+        fs.write_file(tmpdir .. "/test--note--2.md", "")
+        local result, err = filename.ensure_unique(tmpdir, "test--note.md", 2)
+        assert.is_nil(result)
+        assert.is_string(err)
+        assert.truthy(err:match("Could not generate unique filename"))
     end)
 end)

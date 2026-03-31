@@ -9,6 +9,7 @@ local config = require("cubby.config")
 
 describe("list_inbox", function()
     local tmpdir
+    local original_notify
 
     before_each(function()
         tmpdir = vim.fn.tempname() .. "_list_inbox_test"
@@ -26,9 +27,13 @@ describe("list_inbox", function()
             allow_non_md = false,
             enable_recent_dirs = false,
         })
+        -- Suppress vim.notify output in headless tests
+        original_notify = vim.notify
+        vim.notify = function() end
     end)
 
     after_each(function()
+        vim.notify = original_notify
         vim.fn.delete(tmpdir, "rf")
         local test_tmp = _G._cubby_test_tmp
         config.setup({
@@ -59,7 +64,7 @@ describe("list_inbox", function()
         vim.ui.select = original_select
     end)
 
-    it("does not error with non-existent inbox when notify is off", function()
+    it("does not error with non-existent inbox", function()
         config.setup({
             inbox_dir = tmpdir .. "/nonexistent",
             base_dir = tmpdir,

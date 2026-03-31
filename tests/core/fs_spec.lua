@@ -130,3 +130,37 @@ describe("fs.write_file", function()
         assert.is_false(result)
     end)
 end)
+
+describe("fs.path_join", function()
+    it("joins two segments", function()
+        assert.equals("/home/user/notes", fs.path_join("/home/user", "notes"))
+    end)
+
+    it("handles trailing slash on first segment", function()
+        assert.equals("/home/user/notes", fs.path_join("/home/user/", "notes"))
+    end)
+
+    it("handles leading slash on second segment", function()
+        assert.equals("/home/user/notes", fs.path_join("/home/user", "/notes"))
+    end)
+
+    it("handles both trailing and leading slashes", function()
+        assert.equals("/home/user/notes", fs.path_join("/home/user/", "/notes"))
+    end)
+
+    it("joins multiple segments", function()
+        assert.equals("/home/user/notes/inbox", fs.path_join("/home/user", "notes", "inbox"))
+    end)
+
+    it("handles empty input", function()
+        assert.equals("", fs.path_join())
+    end)
+
+    it("handles single segment", function()
+        assert.equals("/home/user", fs.path_join("/home/user"))
+    end)
+
+    it("strips multiple trailing slashes", function()
+        assert.equals("/home/user/notes", fs.path_join("/home/user///", "notes"))
+    end)
+end)

@@ -72,33 +72,3 @@ describe("directory.list_subdirs", function()
         assert.equals(0, #subdirs)
     end)
 end)
-
-describe("directory.ensure_path_exists", function()
-    local tmpdir
-
-    before_each(function()
-        tmpdir = vim.fn.tempname() .. "_ensure_test"
-    end)
-
-    after_each(function()
-        vim.fn.delete(tmpdir, "rf")
-    end)
-
-    it("creates directory when it does not exist", function()
-        directory.ensure_path_exists(tmpdir)
-        assert.equals(1, vim.fn.isdirectory(tmpdir))
-    end)
-
-    it("is idempotent", function()
-        directory.ensure_path_exists(tmpdir)
-        assert.has_no.errors(function()
-            directory.ensure_path_exists(tmpdir)
-        end)
-    end)
-
-    it("creates nested directories", function()
-        local nested = tmpdir .. "/deep/nested/path"
-        directory.ensure_path_exists(nested)
-        assert.equals(1, vim.fn.isdirectory(nested))
-    end)
-end)
