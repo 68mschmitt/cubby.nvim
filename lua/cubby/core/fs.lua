@@ -25,4 +25,3 @@ function M.write_file(path, content)
 end
 
 return M
-

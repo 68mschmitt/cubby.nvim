@@ -10,12 +10,7 @@ function M.create_with_params(dest_dir, label)
 
     local cfg = config.get()
     local timestamp = time.now_stamp(cfg.timestamp_fmt)
-    local new_filename = filename.build_sorted_filename(
-        label,
-        timestamp,
-        cfg.file_ext,
-        cfg.trailing_marker
-    )
+    local new_filename = filename.build_sorted_filename(label, timestamp, cfg.file_ext, cfg.trailing_marker)
     local unique_filename = filename.ensure_unique(dest_dir, new_filename)
     local full_path = dest_dir .. "/" .. unique_filename
 
@@ -53,16 +48,11 @@ function M.do_full_workflow()
 
     local cfg = config.get()
 
-    directory_picker.show_directory_picker(
-        cfg.base_dir,
-        cfg.base_dir,
-        cfg.exclude_dirs,
-        function(dest_dir)
-            input.prompt_for_label(function(label)
-                M.create_with_params(dest_dir, label)
-            end)
-        end
-    )
+    directory_picker.show_directory_picker(cfg.base_dir, cfg.base_dir, cfg.exclude_dirs, function(dest_dir)
+        input.prompt_for_label(function(label)
+            M.create_with_params(dest_dir, label)
+        end)
+    end)
 end
 
 function M.create_note_at()

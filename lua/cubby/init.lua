@@ -23,4 +23,3 @@ function M.list_inbox(args)
 end
 
 return M
-

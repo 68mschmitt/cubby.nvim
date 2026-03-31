@@ -20,4 +20,3 @@ function M.validate_label(label)
 end
 
 return M
-

@@ -29,11 +29,7 @@ function M.execute_sort(current_path, dest_dir, label)
 
     local cfg = config.get()
 
-    local extracted_timestamp = timestamp.preserve_or_fallback_timestamp(
-        current_path,
-        current_path,
-        cfg.timestamp_fmt
-    )
+    local extracted_timestamp = timestamp.preserve_or_fallback_timestamp(current_path, current_path, cfg.timestamp_fmt)
 
     local new_filename = filename.build_sorted_filename_preserving_original(
         label,
@@ -94,24 +90,15 @@ function M.do_full_workflow(current_file)
 
     local cfg = config.get()
 
-    directory_picker.show_directory_picker(
-        cfg.base_dir,
-        cfg.base_dir,
-        cfg.exclude_dirs,
-        function(dest_dir)
-            input.prompt_for_label(function(label)
-                local success, new_path = M.execute_sort(
-                    current_file,
-                    dest_dir,
-                    label
-                )
+    directory_picker.show_directory_picker(cfg.base_dir, cfg.base_dir, cfg.exclude_dirs, function(dest_dir)
+        input.prompt_for_label(function(label)
+            local success, new_path = M.execute_sort(current_file, dest_dir, label)
 
-                if success then
-                    M.handle_sort_completion(current_file, new_path, dest_dir)
-                end
-            end)
-        end
-    )
+            if success then
+                M.handle_sort_completion(current_file, new_path, dest_dir)
+            end
+        end)
+    end)
 end
 
 function M.sort_current_note()
@@ -138,11 +125,7 @@ function M.sort_current_note()
         if selection.use_recent then
             local input = require("cubby.ui.input")
             input.prompt_for_label(function(label)
-                local success, new_path = M.execute_sort(
-                    current_file,
-                    selection.dir,
-                    label
-                )
+                local success, new_path = M.execute_sort(current_file, selection.dir, label)
 
                 if success then
                     M.handle_sort_completion(current_file, new_path, selection.dir)

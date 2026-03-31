@@ -137,13 +137,7 @@ function M.list_inbox(args)
     local inbox_dir = config.inbox_dir
 
     if not fs.dir_exists(inbox_dir) then
-        notify.error(
-            string.format(
-                "Inbox directory not found: %s\nCreate it with: mkdir -p %s",
-                inbox_dir,
-                inbox_dir
-            )
-        )
+        notify.error(string.format("Inbox directory not found: %s\nCreate it with: mkdir -p %s", inbox_dir, inbox_dir))
         return
     end
 

@@ -43,4 +43,3 @@ function M.ensure_path_exists(path)
 end
 
 return M
-

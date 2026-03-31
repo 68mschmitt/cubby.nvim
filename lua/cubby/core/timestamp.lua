@@ -15,8 +15,7 @@ function M.parse_to_unix(timestamp_str)
         return nil
     end
 
-    local year, month, day, hour, min, sec =
-        timestamp_str:match("(%d%d%d%d)%-(%d%d)%-(%d%d)_(%d%d)%-(%d%d)%-(%d%d)")
+    local year, month, day, hour, min, sec = timestamp_str:match("(%d%d%d%d)%-(%d%d)%-(%d%d)_(%d%d)%-(%d%d)%-(%d%d)")
 
     if not year then
         return nil
