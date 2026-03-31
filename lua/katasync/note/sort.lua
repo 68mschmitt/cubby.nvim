@@ -67,11 +67,14 @@ function M.execute_sort_workflow(current_path, dest_dir, label, template_key, or
 
     vim.cmd.edit(dest_path)
 
-    -- Delete the original buffer synchronously. After vim.cmd.edit(), the
-    -- window displays the new buffer so the old one can be safely removed.
-    -- Synchronous deletion ensures BufDelete autocmds fire immediately,
-    -- allowing plugins like markview to detach before any pending debounce
-    -- timers reference the now-stale buffer id.
+    -- Flush any debounce timers that plugins (e.g. markview) may have started
+    -- from cursor/text events on the OLD buffer before this function ran.
+    -- Firing CursorMoved on the new buffer forces those timers to stop and
+    -- re-evaluate against the current (valid) buffer, preventing stale buffer
+    -- IDs from surviving in timer closures.
+    vim.api.nvim_exec_autocmds("CursorMoved", { buffer = 0 })
+
+    -- Now safe to delete the old buffer — no stale timers reference it
     if vim.api.nvim_buf_is_valid(original_bufnr) then
         pcall(vim.api.nvim_buf_delete, original_bufnr, { force = true })
     end
