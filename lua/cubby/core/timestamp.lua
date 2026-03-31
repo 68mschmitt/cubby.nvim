@@ -52,7 +52,7 @@ function M.preserve_or_fallback_timestamp(filename, filepath, fmt)
         return ts
     end
 
-    local time = require("katasync.core.time")
+    local time = require("cubby.core.time")
     return time.now_stamp(fmt)
 end
 

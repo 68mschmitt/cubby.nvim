@@ -1,7 +1,7 @@
 local M = {}
 
-local fs = require("katasync.core.fs")
-local ts_mod = require("katasync.core.timestamp")
+local fs = require("cubby.core.fs")
+local ts_mod = require("cubby.core.timestamp")
 
 local TS_PAT = ts_mod.TIMESTAMP_PATTERN
 

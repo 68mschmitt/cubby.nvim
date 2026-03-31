@@ -1,8 +1,8 @@
 local M = {}
 
 local function get_state_file_path()
-    local config = require("katasync.config").get()
-    return config.recent_state_file or (vim.fn.stdpath("state") .. "/katasync-mru.json")
+    local config = require("cubby.config").get()
+    return config.recent_state_file or (vim.fn.stdpath("state") .. "/cubby-mru.json")
 end
 
 function M.load_recent()
@@ -49,7 +49,7 @@ function M.save_recent(data)
 end
 
 function M.add_recent_entry(dir)
-    local config = require("katasync.config").get()
+    local config = require("cubby.config").get()
 
     if not config.enable_recent_dirs then
         return
@@ -84,7 +84,7 @@ function M.add_recent_entry(dir)
 end
 
 function M.get_recent_list()
-    local config = require("katasync.config").get()
+    local config = require("cubby.config").get()
 
     if not config.enable_recent_dirs then
         return {}
@@ -106,7 +106,7 @@ function M.get_recent_list()
 end
 
 function M.format_recent_display(entry, base_dir)
-    local time = require("katasync.core.time")
+    local time = require("cubby.core.time")
     local relative = entry.dir:gsub("^" .. vim.pesc(base_dir) .. "/", "")
     local time_ago = time.format_relative_time(entry.timestamp)
     return string.format("%s (%s)", relative, time_ago)

@@ -1,11 +1,11 @@
 local M = {}
 
 function M.create_blank_note(inbox_dir)
-    local fs = require("katasync.core.fs")
-    local time = require("katasync.core.time")
-    local filename = require("katasync.core.filename")
-    local notify = require("katasync.ui.notify")
-    local config = require("katasync.config")
+    local fs = require("cubby.core.fs")
+    local time = require("cubby.core.time")
+    local filename = require("cubby.core.filename")
+    local notify = require("cubby.ui.notify")
+    local config = require("cubby.config")
 
     local cfg = config.get()
 

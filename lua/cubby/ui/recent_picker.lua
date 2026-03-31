@@ -1,8 +1,8 @@
 local M = {}
 
 function M.show_recent_picker(callback)
-    local recent = require("katasync.core.recent")
-    local config = require("katasync.config")
+    local recent = require("cubby.core.recent")
+    local config = require("cubby.config")
 
     local cfg = config.get()
     local recent_list = recent.get_recent_list()

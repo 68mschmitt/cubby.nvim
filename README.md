@@ -1,4 +1,4 @@
-# katasync.nvim
+# cubby.nvim
 
 A minimal Neovim plugin for quick note creation and organization. Capture thoughts instantly in your inbox, then sort them into a structured hierarchy when ready.
 
@@ -39,7 +39,7 @@ A minimal Neovim plugin for quick note creation and organization. Capture though
 
 ```lua
 {
-  "68mschmitt/katasync.nvim",
+  "68mschmitt/cubby.nvim",
   cmd = { "NewNote", "CreateNote", "SortNote", "ListInbox" },
   keys = {
     { "<leader>nn", "<cmd>NewNote<cr>", desc = "New note (inbox)" },
@@ -58,9 +58,9 @@ A minimal Neovim plugin for quick note creation and organization. Capture though
 
 ```lua
 use {
-  '68mschmitt/katasync.nvim',
+  '68mschmitt/cubby.nvim',
   config = function()
-    require('katasync').setup({
+    require('cubby').setup({
       inbox_dir = '~/notes/inbox',
     })
   end
@@ -70,7 +70,7 @@ use {
 ## Configuration
 
 ```lua
-require("katasync").setup({
+require("cubby").setup({
   inbox_dir = "~/notes/inbox",              -- Directory for new notes
   base_dir = "~/notes",                      -- Base directory for CreateNote and sorting
   file_ext = ".md",                          -- File extension
@@ -86,7 +86,7 @@ require("katasync").setup({
   -- Recent Destinations (for CreateNote and SortNote)
   enable_recent_dirs = true,                 -- Enable recent destinations feature
   max_recent_dirs = 5,                       -- Number of recent destinations to remember
-  recent_state_file = vim.fn.stdpath("state") .. "/katasync-mru.json",
+  recent_state_file = vim.fn.stdpath("state") .. "/cubby-mru.json",
 })
 ```
 
@@ -140,19 +140,19 @@ The `timestamp_fmt` option controls how timestamps appear in filenames. The defa
 ### Programmatic API
 
 ```lua
-local katasync = require("katasync")
+local cubby = require("cubby")
 
 -- Create a new note in inbox and get the path
-local path = katasync.new_note()
+local path = cubby.new_note()
 
 -- Create a note in chosen location (interactive)
-katasync.create_note_at()
+cubby.create_note_at()
 
 -- Display inbox notes (interactive)
-katasync.list_inbox()
+cubby.list_inbox()
 
 -- Sort the current note
-katasync.sort_note()
+cubby.sort_note()
 ```
 
 ## File Naming
@@ -190,7 +190,7 @@ Browse directories...
 - Faster workflow for repeated destinations
 - Shared history between `:CreateNote` and `:SortNote`
 
-**Storage:** Recent destinations are stored locally in `~/.local/state/nvim/katasync-mru.json`
+**Storage:** Recent destinations are stored locally in `~/.local/state/nvim/cubby-mru.json`
 
 ## Directory Navigation
 

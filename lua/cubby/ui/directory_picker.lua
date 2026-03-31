@@ -46,7 +46,7 @@ local function sanitize_directory_name(name)
 end
 
 function M.show_directory_picker(base_dir, current_path, exclude_dirs, callback)
-    local directory = require("katasync.core.directory")
+    local directory = require("cubby.core.directory")
 
     current_path = current_path or base_dir
     current_path = normalize_path(current_path)
@@ -99,8 +99,8 @@ function M.handle_picker_selection(choice, base_dir, current_path, exclude_dirs,
 end
 
 function M.create_new_directory(parent_path, base_dir, exclude_dirs, callback)
-    local directory = require("katasync.core.directory")
-    local notify = require("katasync.ui.notify")
+    local directory = require("cubby.core.directory")
+    local notify = require("cubby.ui.notify")
 
     vim.ui.input({ prompt = "New directory name: " }, function(name)
         if not name or name == "" then

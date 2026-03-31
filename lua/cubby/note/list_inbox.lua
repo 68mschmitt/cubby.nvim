@@ -1,7 +1,7 @@
 local M = {}
 
 local function scan_inbox_files(inbox_dir, file_ext, allow_non_md)
-    local fs = require("katasync.core.fs")
+    local fs = require("cubby.core.fs")
 
     if not fs.dir_exists(inbox_dir) then
         return {}
@@ -30,8 +30,8 @@ local function scan_inbox_files(inbox_dir, file_ext, allow_non_md)
 end
 
 local function extract_note_metadata(filepath)
-    local timestamp_mod = require("katasync.core.timestamp")
-    local time = require("katasync.core.time")
+    local timestamp_mod = require("cubby.core.timestamp")
+    local time = require("cubby.core.time")
 
     local fname = vim.fn.fnamemodify(filepath, ":t")
 
@@ -85,8 +85,8 @@ local function sort_notes(notes, sort_order)
 end
 
 local function handle_note_selection(note)
-    local notify = require("katasync.ui.notify")
-    local fs = require("katasync.core.fs")
+    local notify = require("cubby.ui.notify")
+    local fs = require("cubby.core.fs")
 
     if not note or not note.filepath then
         notify.error("Invalid note selection")
@@ -102,7 +102,7 @@ local function handle_note_selection(note)
 end
 
 local function show_inbox_picker(notes)
-    local notify = require("katasync.ui.notify")
+    local notify = require("cubby.ui.notify")
 
     if #notes == 0 then
         notify.info("Inbox is empty! Great work!")
@@ -130,9 +130,9 @@ end
 function M.list_inbox(args)
     args = args or {}
 
-    local config = require("katasync.config").get()
-    local notify = require("katasync.ui.notify")
-    local fs = require("katasync.core.fs")
+    local config = require("cubby.config").get()
+    local notify = require("cubby.ui.notify")
+    local fs = require("cubby.core.fs")
 
     local inbox_dir = config.inbox_dir
 

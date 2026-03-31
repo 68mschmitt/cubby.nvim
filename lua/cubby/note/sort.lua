@@ -1,7 +1,7 @@
 local M = {}
 
 function M.validate_current_buffer()
-    local config = require("katasync.config")
+    local config = require("cubby.config")
     local current_file = vim.api.nvim_buf_get_name(0)
 
     if current_file == "" then
@@ -21,11 +21,11 @@ function M.validate_current_buffer()
 end
 
 function M.execute_sort(current_path, dest_dir, label)
-    local config = require("katasync.config")
-    local timestamp = require("katasync.core.timestamp")
-    local filename = require("katasync.core.filename")
-    local move = require("katasync.core.move")
-    local notify = require("katasync.ui.notify")
+    local config = require("cubby.config")
+    local timestamp = require("cubby.core.timestamp")
+    local filename = require("cubby.core.filename")
+    local move = require("cubby.core.move")
+    local notify = require("cubby.ui.notify")
 
     local cfg = config.get()
 
@@ -73,9 +73,9 @@ function M.execute_sort(current_path, dest_dir, label)
 end
 
 function M.handle_sort_completion(old_path, new_path, dest_dir)
-    local config = require("katasync.config")
-    local notify = require("katasync.ui.notify")
-    local recent = require("katasync.core.recent")
+    local config = require("cubby.config")
+    local notify = require("cubby.ui.notify")
+    local recent = require("cubby.core.recent")
 
     local cfg = config.get()
 
@@ -88,9 +88,9 @@ function M.handle_sort_completion(old_path, new_path, dest_dir)
 end
 
 function M.do_full_workflow(current_file)
-    local config = require("katasync.config")
-    local directory_picker = require("katasync.ui.directory_picker")
-    local input = require("katasync.ui.input")
+    local config = require("cubby.config")
+    local directory_picker = require("cubby.ui.directory_picker")
+    local input = require("cubby.ui.input")
 
     local cfg = config.get()
 
@@ -115,8 +115,8 @@ function M.do_full_workflow(current_file)
 end
 
 function M.sort_current_note()
-    local notify = require("katasync.ui.notify")
-    local config = require("katasync.config")
+    local notify = require("cubby.ui.notify")
+    local config = require("cubby.config")
 
     local valid, current_file = M.validate_current_buffer()
 
@@ -132,11 +132,11 @@ function M.sort_current_note()
         return
     end
 
-    local recent_picker = require("katasync.ui.recent_picker")
+    local recent_picker = require("cubby.ui.recent_picker")
 
     recent_picker.show_recent_picker(function(selection)
         if selection.use_recent then
-            local input = require("katasync.ui.input")
+            local input = require("cubby.ui.input")
             input.prompt_for_label(function(label)
                 local success, new_path = M.execute_sort(
                     current_file,

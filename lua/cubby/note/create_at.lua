@@ -1,12 +1,12 @@
 local M = {}
 
 function M.create_with_params(dest_dir, label)
-    local time = require("katasync.core.time")
-    local filename = require("katasync.core.filename")
-    local fs = require("katasync.core.fs")
-    local notify = require("katasync.ui.notify")
-    local config = require("katasync.config")
-    local recent = require("katasync.core.recent")
+    local time = require("cubby.core.time")
+    local filename = require("cubby.core.filename")
+    local fs = require("cubby.core.fs")
+    local notify = require("cubby.ui.notify")
+    local config = require("cubby.config")
+    local recent = require("cubby.core.recent")
 
     local cfg = config.get()
     local timestamp = time.now_stamp(cfg.timestamp_fmt)
@@ -47,9 +47,9 @@ function M.create_with_params(dest_dir, label)
 end
 
 function M.do_full_workflow()
-    local config = require("katasync.config")
-    local directory_picker = require("katasync.ui.directory_picker")
-    local input = require("katasync.ui.input")
+    local config = require("cubby.config")
+    local directory_picker = require("cubby.ui.directory_picker")
+    local input = require("cubby.ui.input")
 
     local cfg = config.get()
 
@@ -66,7 +66,7 @@ function M.do_full_workflow()
 end
 
 function M.create_note_at()
-    local config = require("katasync.config")
+    local config = require("cubby.config")
     local cfg = config.get()
 
     if not cfg.enable_recent_dirs then
@@ -74,11 +74,11 @@ function M.create_note_at()
         return
     end
 
-    local recent_picker = require("katasync.ui.recent_picker")
+    local recent_picker = require("cubby.ui.recent_picker")
 
     recent_picker.show_recent_picker(function(selection)
         if selection.use_recent then
-            local input = require("katasync.ui.input")
+            local input = require("cubby.ui.input")
             input.prompt_for_label(function(label)
                 M.create_with_params(selection.dir, label)
             end)

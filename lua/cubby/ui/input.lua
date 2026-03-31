@@ -1,8 +1,8 @@
 local M = {}
 
 function M.prompt_for_label(callback)
-    local label_module = require("katasync.core.label")
-    local notify = require("katasync.ui.notify")
+    local label_module = require("cubby.core.label")
+    local notify = require("cubby.ui.notify")
 
     vim.ui.input({ prompt = "Enter a descriptive name (optional, press Enter to skip): " }, function(input)
         if not input then

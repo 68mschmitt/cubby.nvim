@@ -1,7 +1,7 @@
 local M = {}
 
 function M.now_stamp(fmt)
-    assert(fmt, "katasync: timestamp format required (did you call setup()?)")
+    assert(fmt, "cubby: timestamp format required (did you call setup()?)")
     return os.date(fmt)
 end
 

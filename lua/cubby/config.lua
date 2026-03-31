@@ -14,7 +14,7 @@ local default_config = {
     allow_non_md = true,
     enable_recent_dirs = true,
     max_recent_dirs = 5,
-    recent_state_file = vim.fn.stdpath("state") .. "/katasync-mru.json",
+    recent_state_file = vim.fn.stdpath("state") .. "/cubby-mru.json",
 }
 
 local config = {}
