@@ -1,5 +1,7 @@
+---@class cubby.commands
 local M = {}
 
+---Register all cubby user commands.
 function M.register()
     vim.api.nvim_create_user_command("NewNote", function()
         local cfg = require("cubby.config").get()
@@ -18,7 +20,6 @@ function M.register()
         local args = {}
 
         if opts.args and opts.args ~= "" then
-            -- Parse arguments
             local parts = vim.split(opts.args, " ")
             args.sort = parts[1]
         end

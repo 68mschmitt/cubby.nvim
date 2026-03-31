@@ -1,10 +1,18 @@
+---@class cubby.ui.directory_picker
 local M = {}
 
+---Strip trailing slashes from a path.
+---@param path string
+---@return string
 local function normalize_path(path)
     path = path:gsub("/+$", "")
     return path
 end
 
+---Compute a display-friendly relative path.
+---@param base_dir string
+---@param current_path string
+---@return string
 local function get_relative_path(base_dir, current_path)
     base_dir = normalize_path(base_dir)
     current_path = normalize_path(current_path)
@@ -17,6 +25,9 @@ local function get_relative_path(base_dir, current_path)
     return relative:gsub("^/", "")
 end
 
+---Sanitize user input for use as a directory name.
+---@param name string? Raw input
+---@return string? sanitized Sanitized name, or nil if invalid
 local function sanitize_directory_name(name)
     if not name or name == "" then
         return nil
@@ -45,6 +56,11 @@ local function sanitize_directory_name(name)
     return name
 end
 
+---Show an interactive directory picker for choosing a destination.
+---@param base_dir string Root directory (cannot navigate above this)
+---@param current_path string Current directory being browsed
+---@param exclude_dirs string[] Directories to exclude from listing
+---@param callback fun(dir: string) Called with the chosen directory
 function M.show_directory_picker(base_dir, current_path, exclude_dirs, callback)
     local directory = require("cubby.core.directory")
 
@@ -67,6 +83,11 @@ function M.show_directory_picker(base_dir, current_path, exclude_dirs, callback)
     end)
 end
 
+---Build the list of items for the directory picker.
+---@param base_dir string Root directory
+---@param current_path string Current directory
+---@param subdirs string[] Subdirectory names
+---@return string[] items
 function M.build_picker_items(base_dir, current_path, subdirs)
     local items = {}
 
@@ -84,7 +105,15 @@ function M.build_picker_items(base_dir, current_path, subdirs)
     return items
 end
 
+---Handle a user's selection from the directory picker.
+---@param choice string The selected item
+---@param base_dir string Root directory
+---@param current_path string Current directory
+---@param exclude_dirs string[] Directories to exclude
+---@param callback fun(dir: string) Called with the chosen directory
 function M.handle_picker_selection(choice, base_dir, current_path, exclude_dirs, callback)
+    local fs = require("cubby.core.fs")
+
     if choice == "← Go Back" then
         local parent = vim.fn.fnamemodify(current_path, ":h")
         M.show_directory_picker(base_dir, parent, exclude_dirs, callback)
@@ -93,13 +122,18 @@ function M.handle_picker_selection(choice, base_dir, current_path, exclude_dirs,
     elseif choice == "+ Create New" then
         M.create_new_directory(current_path, base_dir, exclude_dirs, callback)
     else
-        local next_path = current_path .. "/" .. choice
+        local next_path = fs.path_join(current_path, choice)
         M.show_directory_picker(base_dir, next_path, exclude_dirs, callback)
     end
 end
 
+---Prompt for and create a new directory, then continue browsing.
+---@param parent_path string Parent directory for the new directory
+---@param base_dir string Root directory
+---@param exclude_dirs string[] Directories to exclude
+---@param callback fun(dir: string) Called with the chosen directory
 function M.create_new_directory(parent_path, base_dir, exclude_dirs, callback)
-    local directory = require("cubby.core.directory")
+    local fs = require("cubby.core.fs")
     local notify = require("cubby.ui.notify")
 
     vim.ui.input({ prompt = "New directory name: " }, function(name)
@@ -115,8 +149,8 @@ function M.create_new_directory(parent_path, base_dir, exclude_dirs, callback)
             return
         end
 
-        local new_path = parent_path .. "/" .. sanitized
-        directory.ensure_path_exists(new_path)
+        local new_path = fs.path_join(parent_path, sanitized)
+        fs.ensure_dir(new_path)
 
         M.show_directory_picker(base_dir, new_path, exclude_dirs, callback)
     end)

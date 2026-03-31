@@ -1,5 +1,18 @@
+---@class cubby.note.list_inbox
 local M = {}
 
+---@class cubby.InboxNote
+---@field filepath string Full file path
+---@field filename string Filename only
+---@field timestamp integer Unix epoch timestamp
+---@field relative_time string Human-readable relative time
+---@field display_text string Formatted display string
+
+---Scan the inbox directory for note files.
+---@param inbox_dir string Inbox directory path
+---@param file_ext string Expected file extension
+---@param allow_non_md boolean Whether to include non-markdown files
+---@return string[] filepaths List of full file paths
 local function scan_inbox_files(inbox_dir, file_ext, allow_non_md)
     local fs = require("cubby.core.fs")
 
@@ -8,20 +21,20 @@ local function scan_inbox_files(inbox_dir, file_ext, allow_non_md)
     end
 
     local files = {}
-    local handle = vim.loop.fs_scandir(inbox_dir)
+    local handle = vim.uv.fs_scandir(inbox_dir)
     if not handle then
         return files
     end
 
     while true do
-        local name, type = vim.loop.fs_scandir_next(handle)
+        local name, type = vim.uv.fs_scandir_next(handle)
         if not name then
             break
         end
 
         if type == "file" then
             if allow_non_md or vim.endswith(name, file_ext) then
-                table.insert(files, inbox_dir .. "/" .. name)
+                table.insert(files, fs.path_join(inbox_dir, name))
             end
         end
     end
@@ -29,6 +42,9 @@ local function scan_inbox_files(inbox_dir, file_ext, allow_non_md)
     return files
 end
 
+---Extract display metadata from a note file path.
+---@param filepath string Full file path
+---@return cubby.InboxNote
 local function extract_note_metadata(filepath)
     local timestamp_mod = require("cubby.core.timestamp")
     local time = require("cubby.core.time")
@@ -39,7 +55,7 @@ local function extract_note_metadata(filepath)
     local unix_timestamp = timestamp_mod.parse_to_unix(timestamp_str)
 
     if not unix_timestamp then
-        local stat = vim.loop.fs_stat(filepath)
+        local stat = vim.uv.fs_stat(filepath)
         if stat then
             unix_timestamp = stat.mtime.sec
         else
@@ -59,6 +75,11 @@ local function extract_note_metadata(filepath)
     }
 end
 
+---Load and enrich all inbox notes with metadata.
+---@param inbox_dir string Inbox directory path
+---@param file_ext string Expected file extension
+---@param allow_non_md boolean Whether to include non-markdown files
+---@return cubby.InboxNote[]
 local function get_inbox_notes(inbox_dir, file_ext, allow_non_md)
     local filepaths = scan_inbox_files(inbox_dir, file_ext, allow_non_md)
     local notes = {}
@@ -71,6 +92,10 @@ local function get_inbox_notes(inbox_dir, file_ext, allow_non_md)
     return notes
 end
 
+---Sort notes by timestamp.
+---@param notes cubby.InboxNote[]
+---@param sort_order string? "newest" (default) or "oldest"
+---@return cubby.InboxNote[]
 local function sort_notes(notes, sort_order)
     sort_order = sort_order or "newest"
 
@@ -84,6 +109,8 @@ local function sort_notes(notes, sort_order)
     return notes
 end
 
+---Open a selected note in the current window.
+---@param note cubby.InboxNote?
 local function handle_note_selection(note)
     local notify = require("cubby.ui.notify")
     local fs = require("cubby.core.fs")
@@ -101,6 +128,8 @@ local function handle_note_selection(note)
     vim.cmd.edit(note.filepath)
 end
 
+---Display the inbox picker for note selection.
+---@param notes cubby.InboxNote[]
 local function show_inbox_picker(notes)
     local notify = require("cubby.ui.notify")
 
@@ -116,9 +145,6 @@ local function show_inbox_picker(notes)
 
     vim.ui.select(items, {
         prompt = string.format("Inbox (%d note%s)", #notes, #notes == 1 and "" or "s"),
-        format_item = function(item)
-            return item
-        end,
     }, function(choice, idx)
         if not choice then
             return
@@ -127,6 +153,8 @@ local function show_inbox_picker(notes)
     end)
 end
 
+---List inbox notes in a picker with relative timestamps.
+---@param args { sort: string? }? Optional arguments
 function M.list_inbox(args)
     args = args or {}
 

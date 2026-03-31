@@ -1,5 +1,12 @@
+---@class cubby.ui.recent_picker
 local M = {}
 
+---@class cubby.RecentPickerSelection
+---@field use_recent boolean Whether a recent entry was selected
+---@field dir string? Directory path (only if use_recent is true)
+
+---Show the recent destinations picker, or fall through to browse mode.
+---@param callback fun(selection: cubby.RecentPickerSelection)
 function M.show_recent_picker(callback)
     local recent = require("cubby.core.recent")
     local config = require("cubby.config")

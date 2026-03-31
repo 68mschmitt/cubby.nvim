@@ -1,5 +1,10 @@
+---@class cubby.note.create_at
 local M = {}
 
+---Create a note with the given parameters in the specified directory.
+---@param dest_dir string Destination directory
+---@param label string? Optional descriptive label
+---@return string? path Full path to the created note, or nil on failure
 function M.create_with_params(dest_dir, label)
     local time = require("cubby.core.time")
     local filename = require("cubby.core.filename")
@@ -11,8 +16,14 @@ function M.create_with_params(dest_dir, label)
     local cfg = config.get()
     local timestamp = time.now_stamp(cfg.timestamp_fmt)
     local new_filename = filename.build_sorted_filename(label, timestamp, cfg.file_ext, cfg.trailing_marker)
-    local unique_filename = filename.ensure_unique(dest_dir, new_filename)
-    local full_path = dest_dir .. "/" .. unique_filename
+    local unique_filename, unique_err = filename.ensure_unique(dest_dir, new_filename)
+
+    if not unique_filename then
+        notify.warn("Failed to create note: " .. tostring(unique_err))
+        return nil
+    end
+
+    local full_path = fs.path_join(dest_dir, unique_filename)
 
     if cfg.auto_save_new_note then
         fs.ensure_dir(dest_dir)
@@ -31,16 +42,15 @@ function M.create_with_params(dest_dir, label)
         end
     end
 
-    if cfg.notify then
-        local relative = full_path:gsub("^" .. vim.pesc(cfg.base_dir) .. "/", "")
-        notify.info("Created → " .. relative)
-    end
+    local relative = full_path:gsub("^" .. vim.pesc(cfg.base_dir) .. "/", "")
+    notify.info("Created → " .. relative)
 
     recent.add_recent_entry(dest_dir)
 
     return full_path
 end
 
+---Run the full create-at workflow with directory picker and label prompt.
 function M.do_full_workflow()
     local config = require("cubby.config")
     local directory_picker = require("cubby.ui.directory_picker")
@@ -55,6 +65,8 @@ function M.do_full_workflow()
     end)
 end
 
+---Entry point for creating a note at a chosen location.
+---Shows recent picker if enabled, otherwise goes straight to directory picker.
 function M.create_note_at()
     local config = require("cubby.config")
     local cfg = config.get()
