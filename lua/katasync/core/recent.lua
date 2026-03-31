@@ -48,7 +48,7 @@ function M.save_recent(data)
     return true
 end
 
-function M.add_recent_entry(dir, template, label)
+function M.add_recent_entry(dir)
     local config = require("katasync.config").get()
 
     if not config.enable_recent_dirs then
@@ -72,8 +72,6 @@ function M.add_recent_entry(dir, template, label)
 
     table.insert(recent, 1, {
         dir = dir,
-        template = template,
-        label = label,
         timestamp = os.time(),
     })
 
@@ -130,7 +128,7 @@ end
 function M.format_recent_display(entry, base_dir)
     local relative = entry.dir:gsub("^" .. vim.pesc(base_dir) .. "/", "")
     local time_ago = M.format_time_ago(entry.timestamp)
-    return string.format("%s [%s] (%s)", relative, entry.template or "none", time_ago)
+    return string.format("%s (%s)", relative, time_ago)
 end
 
 return M

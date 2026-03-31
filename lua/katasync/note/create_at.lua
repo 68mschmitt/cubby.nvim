@@ -7,11 +7,10 @@ local notify = require("katasync.ui.notify")
 local config = require("katasync.config")
 local directory_picker = require("katasync.ui.directory_picker")
 local input = require("katasync.ui.input")
-local template_module = require("katasync.core.template")
 local recent_picker = require("katasync.ui.recent_picker")
 local recent = require("katasync.core.recent")
 
-function M.create_with_params(dest_dir, template_key, label)
+function M.create_with_params(dest_dir, label)
     local cfg = config.get()
     local timestamp = time.now_stamp()
     local new_filename = filename.build_sorted_filename(
@@ -23,13 +22,9 @@ function M.create_with_params(dest_dir, template_key, label)
     local unique_filename = filename.ensure_unique(dest_dir, new_filename)
     local full_path = dest_dir .. "/" .. unique_filename
 
-    local raw_template = cfg.templates[template_key] or ""
-    local variables = template_module.get_template_variables(label, timestamp)
-    local template_content = template_module.substitute_variables(raw_template, variables)
-
     if cfg.auto_save_new_note then
         fs.ensure_dir(dest_dir)
-        local success = fs.write_file(full_path, template_content)
+        local success = fs.write_file(full_path, "")
 
         if not success then
             notify.warn("Failed to create note: " .. full_path)
@@ -41,13 +36,7 @@ function M.create_with_params(dest_dir, template_key, label)
         vim.cmd.edit(full_path)
 
         if not cfg.auto_save_new_note then
-            -- Ensure filetype is set for LSP activation, especially when file doesn't exist yet
             vim.bo.filetype = "markdown"
-            
-            if template_content ~= "" then
-                local lines = vim.split(template_content, "\n")
-                vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
-            end
         end
     end
 
@@ -56,7 +45,7 @@ function M.create_with_params(dest_dir, template_key, label)
         notify.info("Created → " .. relative)
     end
 
-    recent.add_recent_entry(dest_dir, template_key, label)
+    recent.add_recent_entry(dest_dir)
 
     return full_path
 end
@@ -70,13 +59,7 @@ function M.do_full_workflow()
         cfg.exclude_dirs,
         function(dest_dir)
             input.prompt_for_label(function(label)
-                input.prompt_for_template(
-                    cfg.templates,
-                    cfg.default_template,
-                    function(template_key)
-                        M.create_with_params(dest_dir, template_key, label)
-                    end
-                )
+                M.create_with_params(dest_dir, label)
             end)
         end
     )
@@ -93,7 +76,7 @@ function M.create_note_at()
     recent_picker.show_recent_picker(function(selection)
         if selection.use_recent then
             input.prompt_for_label(function(label)
-                M.create_with_params(selection.dir, selection.template, label)
+                M.create_with_params(selection.dir, label)
             end)
         else
             M.do_full_workflow()

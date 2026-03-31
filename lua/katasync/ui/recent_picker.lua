@@ -45,8 +45,6 @@ function M.show_recent_picker(callback)
             callback({
                 use_recent = true,
                 dir = entry.dir,
-                template = entry.template,
-                label = entry.label,
             })
         end
     end)

@@ -43,42 +43,4 @@ function M.confirm_cross_filesystem_move(callback)
     end)
 end
 
-function M.prompt_for_template(templates, default_key, callback)
-    local template_keys = {}
-
-    for key, _ in pairs(templates) do
-        table.insert(template_keys, key)
-    end
-
-    table.sort(template_keys)
-
-    local default_idx = nil
-    for i, key in ipairs(template_keys) do
-        if key == default_key then
-            default_idx = i
-            break
-        end
-    end
-
-    if default_idx and default_idx > 1 then
-        table.remove(template_keys, default_idx)
-        table.insert(template_keys, 1, default_key)
-    end
-
-    vim.ui.select(template_keys, {
-        prompt = "Select template:",
-        format_item = function(item)
-            if item == default_key then
-                return item .. " (default)"
-            end
-            return item
-        end,
-    }, function(choice)
-        if not choice then
-            return
-        end
-        callback(choice)
-    end)
-end
-
 return M

@@ -7,7 +7,6 @@ local move = require("katasync.core.move")
 local notify = require("katasync.ui.notify")
 local directory_picker = require("katasync.ui.directory_picker")
 local input = require("katasync.ui.input")
-local template_module = require("katasync.core.template")
 local recent_picker = require("katasync.ui.recent_picker")
 local recent = require("katasync.core.recent")
 
@@ -30,7 +29,7 @@ function M.validate_current_buffer()
     return true, current_file
 end
 
-function M.execute_sort_workflow(current_path, dest_dir, label, template_key, original_content)
+function M.execute_sort(current_path, dest_dir, label)
     local cfg = config.get()
 
     local extracted_timestamp = timestamp.preserve_or_fallback_timestamp(
@@ -48,7 +47,6 @@ function M.execute_sort_workflow(current_path, dest_dir, label, template_key, or
     )
 
     local unique_filename = filename.ensure_unique(dest_dir, new_filename)
-
     local dest_path = dest_dir .. "/" .. unique_filename
 
     -- Capture the original buffer number before moving the file
@@ -79,29 +77,10 @@ function M.execute_sort_workflow(current_path, dest_dir, label, template_key, or
         pcall(vim.api.nvim_buf_delete, original_bufnr, { force = true })
     end
 
-
-    if template_key then
-        local raw_template = cfg.templates[template_key] or ""
-        local variables = template_module.get_sort_template_variables(
-            label,
-            extracted_timestamp,
-            original_content
-        )
-        local final_content = template_module.apply_template_with_content(
-            raw_template,
-            variables,
-            original_content
-        )
-        
-        local lines = vim.split(final_content, "\n")
-        vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
-        vim.cmd("write")
-    end
-
     return true, dest_path
 end
 
-function M.handle_sort_completion(old_path, new_path, dest_dir, template_key, label)
+function M.handle_sort_completion(old_path, new_path, dest_dir)
     local cfg = config.get()
 
     if cfg.notify then
@@ -110,10 +89,10 @@ function M.handle_sort_completion(old_path, new_path, dest_dir, template_key, la
         notify.info("Sorted → " .. relative)
     end
 
-    recent.add_recent_entry(dest_dir, template_key, label)
+    recent.add_recent_entry(dest_dir)
 end
 
-function M.do_full_workflow(current_file, original_content)
+function M.do_full_workflow(current_file)
     local cfg = config.get()
 
     directory_picker.show_directory_picker(
@@ -122,23 +101,15 @@ function M.do_full_workflow(current_file, original_content)
         cfg.exclude_dirs,
         function(dest_dir)
             input.prompt_for_label(function(label)
-                input.prompt_for_template(
-                    cfg.templates,
-                    cfg.default_template,
-                    function(template_key)
-                        local success, new_path = M.execute_sort_workflow(
-                            current_file,
-                            dest_dir,
-                            label,
-                            template_key,
-                            original_content
-                        )
-
-                        if success then
-                            M.handle_sort_completion(current_file, new_path, dest_dir, template_key, label)
-                        end
-                    end
+                local success, new_path = M.execute_sort(
+                    current_file,
+                    dest_dir,
+                    label
                 )
+
+                if success then
+                    M.handle_sort_completion(current_file, new_path, dest_dir)
+                end
             end)
         end
     )
@@ -153,35 +124,29 @@ function M.sort_current_note()
     end
 
     local cfg = config.get()
-    
-    local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-    local original_content = table.concat(buffer_lines, "\n")
 
     if not cfg.enable_recent_dirs then
-        M.do_full_workflow(current_file, original_content)
+        M.do_full_workflow(current_file)
         return
     end
 
     recent_picker.show_recent_picker(function(selection)
         if selection.use_recent then
             input.prompt_for_label(function(label)
-                local success, new_path = M.execute_sort_workflow(
+                local success, new_path = M.execute_sort(
                     current_file,
                     selection.dir,
-                    label,
-                    selection.template,
-                    original_content
+                    label
                 )
 
                 if success then
-                    M.handle_sort_completion(current_file, new_path, selection.dir, selection.template, label)
+                    M.handle_sort_completion(current_file, new_path, selection.dir)
                 end
             end)
         else
-            M.do_full_workflow(current_file, original_content)
+            M.do_full_workflow(current_file)
         end
     end)
 end
 
 return M
-
