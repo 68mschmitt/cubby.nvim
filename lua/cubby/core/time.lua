@@ -1,10 +1,17 @@
+---@class cubby.time
 local M = {}
 
+---Generate a timestamp string for the current time.
+---@param fmt string strftime format string (required)
+---@return string timestamp
 function M.now_stamp(fmt)
     assert(fmt, "cubby: timestamp format required (did you call setup()?)")
     return os.date(fmt)
 end
 
+---Format a Unix timestamp as a human-readable relative time string.
+---@param unix_timestamp integer Unix epoch timestamp
+---@return string relative e.g., "just now", "5 minutes ago", "yesterday"
 function M.format_relative_time(unix_timestamp)
     local now = os.time()
     local diff = now - unix_timestamp
