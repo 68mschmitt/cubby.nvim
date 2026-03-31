@@ -105,29 +105,10 @@ function M.get_recent_list()
     return valid_entries
 end
 
-function M.format_time_ago(timestamp)
-    local now = os.time()
-    local diff = now - timestamp
-
-    if diff < 60 then
-        return "just now"
-    elseif diff < 3600 then
-        local mins = math.floor(diff / 60)
-        return mins == 1 and "1 min ago" or string.format("%d mins ago", mins)
-    elseif diff < 86400 then
-        local hours = math.floor(diff / 3600)
-        return hours == 1 and "1 hour ago" or string.format("%d hours ago", hours)
-    elseif diff < 172800 then
-        return "yesterday"
-    else
-        local days = math.floor(diff / 86400)
-        return string.format("%d days ago", days)
-    end
-end
-
 function M.format_recent_display(entry, base_dir)
+    local time = require("katasync.core.time")
     local relative = entry.dir:gsub("^" .. vim.pesc(base_dir) .. "/", "")
-    local time_ago = M.format_time_ago(entry.timestamp)
+    local time_ago = time.format_relative_time(entry.timestamp)
     return string.format("%s (%s)", relative, time_ago)
 end
 

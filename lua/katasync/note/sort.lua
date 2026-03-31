@@ -1,16 +1,7 @@
 local M = {}
 
-local config = require("katasync.config")
-local timestamp = require("katasync.core.timestamp")
-local filename = require("katasync.core.filename")
-local move = require("katasync.core.move")
-local notify = require("katasync.ui.notify")
-local directory_picker = require("katasync.ui.directory_picker")
-local input = require("katasync.ui.input")
-local recent_picker = require("katasync.ui.recent_picker")
-local recent = require("katasync.core.recent")
-
 function M.validate_current_buffer()
+    local config = require("katasync.config")
     local current_file = vim.api.nvim_buf_get_name(0)
 
     if current_file == "" then
@@ -30,6 +21,12 @@ function M.validate_current_buffer()
 end
 
 function M.execute_sort(current_path, dest_dir, label)
+    local config = require("katasync.config")
+    local timestamp = require("katasync.core.timestamp")
+    local filename = require("katasync.core.filename")
+    local move = require("katasync.core.move")
+    local notify = require("katasync.ui.notify")
+
     local cfg = config.get()
 
     local extracted_timestamp = timestamp.preserve_or_fallback_timestamp(
@@ -49,7 +46,6 @@ function M.execute_sort(current_path, dest_dir, label)
     local unique_filename = filename.ensure_unique(dest_dir, new_filename)
     local dest_path = dest_dir .. "/" .. unique_filename
 
-    -- Capture the original buffer number before moving the file
     local original_bufnr = vim.api.nvim_get_current_buf()
 
     if vim.bo.modified then
@@ -67,12 +63,8 @@ function M.execute_sort(current_path, dest_dir, label)
 
     -- Flush any debounce timers that plugins (e.g. markview) may have started
     -- from cursor/text events on the OLD buffer before this function ran.
-    -- Firing CursorMoved on the new buffer forces those timers to stop and
-    -- re-evaluate against the current (valid) buffer, preventing stale buffer
-    -- IDs from surviving in timer closures.
     vim.api.nvim_exec_autocmds("CursorMoved", { buffer = 0 })
 
-    -- Now safe to delete the old buffer — no stale timers reference it
     if vim.api.nvim_buf_is_valid(original_bufnr) then
         pcall(vim.api.nvim_buf_delete, original_bufnr, { force = true })
     end
@@ -81,11 +73,14 @@ function M.execute_sort(current_path, dest_dir, label)
 end
 
 function M.handle_sort_completion(old_path, new_path, dest_dir)
+    local config = require("katasync.config")
+    local notify = require("katasync.ui.notify")
+    local recent = require("katasync.core.recent")
+
     local cfg = config.get()
 
     if cfg.notify then
-        local base_dir = cfg.base_dir
-        local relative = new_path:gsub("^" .. vim.pesc(base_dir) .. "/", "")
+        local relative = new_path:gsub("^" .. vim.pesc(cfg.base_dir) .. "/", "")
         notify.info("Sorted → " .. relative)
     end
 
@@ -93,6 +88,10 @@ function M.handle_sort_completion(old_path, new_path, dest_dir)
 end
 
 function M.do_full_workflow(current_file)
+    local config = require("katasync.config")
+    local directory_picker = require("katasync.ui.directory_picker")
+    local input = require("katasync.ui.input")
+
     local cfg = config.get()
 
     directory_picker.show_directory_picker(
@@ -116,6 +115,9 @@ function M.do_full_workflow(current_file)
 end
 
 function M.sort_current_note()
+    local notify = require("katasync.ui.notify")
+    local config = require("katasync.config")
+
     local valid, current_file = M.validate_current_buffer()
 
     if not valid then
@@ -130,8 +132,11 @@ function M.sort_current_note()
         return
     end
 
+    local recent_picker = require("katasync.ui.recent_picker")
+
     recent_picker.show_recent_picker(function(selection)
         if selection.use_recent then
+            local input = require("katasync.ui.input")
             input.prompt_for_label(function(label)
                 local success, new_path = M.execute_sort(
                     current_file,

@@ -1,16 +1,17 @@
 local M = {}
 
-local time = require("katasync.core.time")
-local filename = require("katasync.core.filename")
-local fs = require("katasync.core.fs")
-local notify = require("katasync.ui.notify")
-local config = require("katasync.config")
-
 function M.create_blank_note(inbox_dir)
-    fs.ensure_dir(inbox_dir)
+    local fs = require("katasync.core.fs")
+    local time = require("katasync.core.time")
+    local filename = require("katasync.core.filename")
+    local notify = require("katasync.ui.notify")
+    local config = require("katasync.config")
 
     local cfg = config.get()
-    local timestamp = time.now_stamp()
+
+    fs.ensure_dir(inbox_dir)
+
+    local timestamp = time.now_stamp(cfg.timestamp_fmt)
     local base_filename = timestamp .. cfg.trailing_marker .. cfg.file_ext
     local unique_filename = filename.ensure_unique(inbox_dir, base_filename)
 
@@ -27,7 +28,6 @@ function M.create_blank_note(inbox_dir)
 
     if cfg.open_after_create then
         vim.cmd.edit(full_path)
-        -- Ensure filetype is set for LSP activation, especially when file doesn't exist yet
         if not cfg.auto_save_new_note then
             vim.bo.filetype = "markdown"
         end

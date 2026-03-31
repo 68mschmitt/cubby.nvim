@@ -1,9 +1,9 @@
 local M = {}
 
-local recent = require("katasync.core.recent")
-local config = require("katasync.config")
-
 function M.show_recent_picker(callback)
+    local recent = require("katasync.core.recent")
+    local config = require("katasync.config")
+
     local cfg = config.get()
     local recent_list = recent.get_recent_list()
 
@@ -21,8 +21,7 @@ function M.show_recent_picker(callback)
         table.insert(entries, entry)
     end
 
-    table.insert(items, "─────────────")
-    table.insert(items, "📁 Browse directories...")
+    table.insert(items, "Browse directories...")
 
     vim.ui.select(items, {
         prompt = "Select destination:",
@@ -31,12 +30,8 @@ function M.show_recent_picker(callback)
             return
         end
 
-        if choice == "📁 Browse directories..." then
+        if choice == "Browse directories..." then
             callback({ use_recent = false })
-            return
-        end
-
-        if choice == "─────────────" then
             return
         end
 

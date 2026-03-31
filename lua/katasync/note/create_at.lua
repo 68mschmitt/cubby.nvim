@@ -1,18 +1,15 @@
 local M = {}
 
-local time = require("katasync.core.time")
-local filename = require("katasync.core.filename")
-local fs = require("katasync.core.fs")
-local notify = require("katasync.ui.notify")
-local config = require("katasync.config")
-local directory_picker = require("katasync.ui.directory_picker")
-local input = require("katasync.ui.input")
-local recent_picker = require("katasync.ui.recent_picker")
-local recent = require("katasync.core.recent")
-
 function M.create_with_params(dest_dir, label)
+    local time = require("katasync.core.time")
+    local filename = require("katasync.core.filename")
+    local fs = require("katasync.core.fs")
+    local notify = require("katasync.ui.notify")
+    local config = require("katasync.config")
+    local recent = require("katasync.core.recent")
+
     local cfg = config.get()
-    local timestamp = time.now_stamp()
+    local timestamp = time.now_stamp(cfg.timestamp_fmt)
     local new_filename = filename.build_sorted_filename(
         label,
         timestamp,
@@ -34,7 +31,6 @@ function M.create_with_params(dest_dir, label)
 
     if cfg.open_after_create then
         vim.cmd.edit(full_path)
-
         if not cfg.auto_save_new_note then
             vim.bo.filetype = "markdown"
         end
@@ -51,6 +47,10 @@ function M.create_with_params(dest_dir, label)
 end
 
 function M.do_full_workflow()
+    local config = require("katasync.config")
+    local directory_picker = require("katasync.ui.directory_picker")
+    local input = require("katasync.ui.input")
+
     local cfg = config.get()
 
     directory_picker.show_directory_picker(
@@ -66,6 +66,7 @@ function M.do_full_workflow()
 end
 
 function M.create_note_at()
+    local config = require("katasync.config")
     local cfg = config.get()
 
     if not cfg.enable_recent_dirs then
@@ -73,8 +74,11 @@ function M.create_note_at()
         return
     end
 
+    local recent_picker = require("katasync.ui.recent_picker")
+
     recent_picker.show_recent_picker(function(selection)
         if selection.use_recent then
+            local input = require("katasync.ui.input")
             input.prompt_for_label(function(label)
                 M.create_with_params(selection.dir, label)
             end)

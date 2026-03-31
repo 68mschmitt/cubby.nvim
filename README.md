@@ -23,7 +23,6 @@ A minimal Neovim plugin for quick note creation and organization. Capture though
 - **Interactive Picker**: Select notes to open and review
 - **Sorting Options**: View notes newest-first or oldest-first
 - **Empty Inbox Detection**: Helpful message when inbox is empty
-- **Quick Access**: Streamline the capture-then-sort workflow
 
 ### Note Sorting (`:SortNote`)
 - **Recent Destinations**: Quick access to recently used directories
@@ -75,9 +74,9 @@ require("katasync").setup({
   inbox_dir = "~/notes/inbox",              -- Directory for new notes
   base_dir = "~/notes",                      -- Base directory for CreateNote and sorting
   file_ext = ".md",                          -- File extension
-  timestamp_fmt = "%Y-%m-%d_%H-%M-%S",      -- Timestamp format
+  timestamp_fmt = "%Y-%m-%d_%H-%M-%S",      -- Timestamp format (see note below)
   open_after_create = true,                  -- Open file after creating
-  auto_save_new_note = true,                 -- Auto-save new notes to disk (false = manual :w)
+  auto_save_new_note = false,                -- Auto-save new notes to disk (false = manual :w)
   notify = true,                             -- Show notifications
   trailing_marker = "--note",                -- Filename suffix marker
   exclude_dirs = { ".git", ".obsidian" },   -- Directories to exclude from picker
@@ -93,8 +92,14 @@ require("katasync").setup({
 
 ### Auto-Save Behavior
 
-- **`auto_save_new_note = true`** (default): File is immediately saved to disk when created. The file exists in your filesystem before you start editing.
-- **`auto_save_new_note = false`**: File is only created in a buffer. You must save with `:w` to persist it. Closing the buffer without saving leaves no empty file behind.
+- **`auto_save_new_note = false`** (default): File is only created in a buffer. You must save with `:w` to persist it. Closing the buffer without saving leaves no empty file behind.
+- **`auto_save_new_note = true`**: File is immediately saved to disk when created. The file exists in your filesystem before you start editing.
+
+### Timestamp Format
+
+The `timestamp_fmt` option controls how timestamps appear in filenames. The default format `%Y-%m-%d_%H-%M-%S` produces timestamps like `2025-10-08_09-17-33`.
+
+**Important:** The plugin's filename parsing depends on the `YYYY-MM-DD_HH-MM-SS` pattern. Changing `timestamp_fmt` will break timestamp extraction from filenames, relative time display in `:ListInbox`, and timestamp preservation during `:SortNote`. Only change this if you understand the consequences.
 
 ## Usage
 
@@ -159,16 +164,12 @@ katasync.sort_note()
 ### Created Notes (`:CreateNote`)
 - `miata-boost-2025-10-14_13-42-10--note.md` - With label
 - `2025-10-14_13-42-10--note.md` - Without label (skipped)
-- `{label}-{timestamp}--note.md` - General pattern with label
-- `{timestamp}--note.md` - General pattern without label
 - Created directly in final destination
 - Collision handling with `--2`, `--3`, etc.
 
 ### Sorted Notes (`:SortNote`)
 - `miata-boost-2025-10-08_11-07-15--note.md` - With label
 - `2025-10-08_11-07-15--note.md` - Without label (skipped)
-- `{label}-{timestamp}--note.md` - General pattern with label
-- `{timestamp}--note.md` - General pattern without label
 - Timestamp is preserved from original file
 - Label precedes timestamp for readability (when provided)
 - Collision handling with `--2`, `--3`, etc.
@@ -181,8 +182,7 @@ The plugin tracks your most recently used directories when using `:CreateNote` a
 Select destination:
 → projects/miata (2 hours ago)
 → journal (today)
-─────────────
-📁 Browse directories...
+Browse directories...
 ```
 
 **Benefits:**
@@ -195,10 +195,10 @@ Select destination:
 ## Directory Navigation
 
 When browsing directories, you'll see:
-- **← Go Back** - Navigate to parent directory (hidden at base)
-- **✓ Drop Here** - Select current directory as destination
-- **+ Create New** - Create a new subdirectory
 - **[Subdirectories]** - Existing subdirectories (alphabetical)
+- **✓ Drop Here** - Select current directory as destination
+- **+ Create New** - Create a new subdirectory (names are sanitized)
+- **← Go Back** - Navigate to parent directory (hidden at base)
 
 ## Philosophy
 
