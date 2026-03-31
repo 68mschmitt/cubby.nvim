@@ -1,10 +1,18 @@
+---@class cubby.recent
 local M = {}
 
+---@class cubby.RecentEntry
+---@field dir string Directory path
+---@field timestamp integer Unix epoch of last use
+
+---@return string
 local function get_state_file_path()
     local config = require("cubby.config").get()
     return config.recent_state_file or (vim.fn.stdpath("state") .. "/cubby-mru.json")
 end
 
+---Load recent directory data from the state file.
+---@return { recent: cubby.RecentEntry[] }
 function M.load_recent()
     local state_file = get_state_file_path()
 
@@ -28,6 +36,9 @@ function M.load_recent()
     return data
 end
 
+---Save recent directory data to the state file.
+---@param data { recent: cubby.RecentEntry[] }
+---@return boolean success
 function M.save_recent(data)
     local state_file = get_state_file_path()
     local state_dir = vim.fn.fnamemodify(state_file, ":h")
@@ -48,6 +59,8 @@ function M.save_recent(data)
     return true
 end
 
+---Record a directory as recently used, bumping it to the front.
+---@param dir string Directory path to record
 function M.add_recent_entry(dir)
     local config = require("cubby.config").get()
 
@@ -83,6 +96,9 @@ function M.add_recent_entry(dir)
     M.save_recent(data)
 end
 
+---Get the list of recent directories, filtering out those that no longer exist.
+---Returns copies of entries to avoid mutating the loaded data.
+---@return cubby.RecentEntry[]
 function M.get_recent_list()
     local config = require("cubby.config").get()
 
@@ -97,14 +113,20 @@ function M.get_recent_list()
     for _, entry in ipairs(recent) do
         local expanded_dir = vim.fn.expand(entry.dir)
         if vim.fn.isdirectory(expanded_dir) == 1 then
-            entry.dir = expanded_dir
-            table.insert(valid_entries, entry)
+            table.insert(valid_entries, {
+                dir = expanded_dir,
+                timestamp = entry.timestamp,
+            })
         end
     end
 
     return valid_entries
 end
 
+---Format a recent entry for display in the picker.
+---@param entry cubby.RecentEntry
+---@param base_dir string Base directory for computing relative paths
+---@return string display Formatted string like "projects/miata (2 hours ago)"
 function M.format_recent_display(entry, base_dir)
     local time = require("cubby.core.time")
     local relative = entry.dir:gsub("^" .. vim.pesc(base_dir) .. "/", "")
