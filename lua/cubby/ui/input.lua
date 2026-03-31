@@ -1,5 +1,9 @@
+---@class cubby.ui.input
 local M = {}
 
+---Prompt the user for an optional descriptive label.
+---Sanitizes input and re-prompts on invalid labels.
+---@param callback fun(label: string?) Called with sanitized label, or nil if skipped
 function M.prompt_for_label(callback)
     local label_module = require("cubby.core.label")
     local notify = require("cubby.ui.notify")
@@ -26,21 +30,11 @@ function M.prompt_for_label(callback)
     end)
 end
 
+---Prompt the user for a new directory name.
+---@param callback fun(name: string?) Called with the raw input
 function M.prompt_for_directory_name(callback)
     vim.ui.input({ prompt = "New directory name: " }, function(name)
         callback(name)
-    end)
-end
-
-function M.confirm_cross_filesystem_move(callback)
-    vim.ui.select({ "Yes", "No" }, {
-        prompt = "This is a cross-filesystem move. Continue?",
-    }, function(choice)
-        if choice == "Yes" then
-            callback(true)
-        else
-            callback(false)
-        end
     end)
 end
 
