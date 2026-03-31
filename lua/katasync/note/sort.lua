@@ -67,9 +67,15 @@ function M.execute_sort_workflow(current_path, dest_dir, label, template_key, or
 
     vim.cmd.edit(dest_path)
 
-    -- Delete the original buffer which now points to a non-existent file
-    -- Use pcall to safely handle case where buffer might already be deleted
-    pcall(vim.api.nvim_buf_delete, original_bufnr, { force = false })
+    -- Delete the original buffer synchronously. After vim.cmd.edit(), the
+    -- window displays the new buffer so the old one can be safely removed.
+    -- Synchronous deletion ensures BufDelete autocmds fire immediately,
+    -- allowing plugins like markview to detach before any pending debounce
+    -- timers reference the now-stale buffer id.
+    if vim.api.nvim_buf_is_valid(original_bufnr) then
+        pcall(vim.api.nvim_buf_delete, original_bufnr, { force = true })
+    end
+
 
     if template_key then
         local raw_template = cfg.templates[template_key] or ""
