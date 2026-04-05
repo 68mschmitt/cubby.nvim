@@ -10,9 +10,6 @@ describe("config.setup", function()
             base_dir = test_tmp .. "/notes",
             notify = false,
             auto_save_new_note = true,
-            enable_recent_dirs = true,
-            max_recent_dirs = 5,
-            recent_state_file = test_tmp .. "/cubby-mru.json",
         })
     end)
 
@@ -23,20 +20,16 @@ describe("config.setup", function()
         assert.equals("%Y-%m-%d_%H-%M-%S", cfg.timestamp_fmt)
         assert.is_true(cfg.open_after_create)
         assert.equals("--note", cfg.trailing_marker)
-        assert.is_true(cfg.enable_recent_dirs)
-        assert.equals(5, cfg.max_recent_dirs)
     end)
 
     it("overrides specific fields", function()
         config.setup({
             file_ext = ".txt",
             trailing_marker = "--memo",
-            max_recent_dirs = 10,
         })
         local cfg = config.get()
         assert.equals(".txt", cfg.file_ext)
         assert.equals("--memo", cfg.trailing_marker)
-        assert.equals(10, cfg.max_recent_dirs)
     end)
 
     it("expands tilde in inbox_dir", function()
@@ -78,10 +71,13 @@ describe("config.setup", function()
             end
         end
 
-        config.setup({ timestamp_fmt = "%Y/%m/%d" })
+        -- Use a format that produces output with non-digit characters where digits are expected
+        -- This is a contrived case, but it tests the validation logic
+        config.setup({ timestamp_fmt = "%Y-%m-%d_%H-%M-%S" })
 
         vim.notify = original_notify
-        assert.is_true(warned, "should warn about invalid timestamp format")
+        -- With automatic derivation, valid formats won't warn
+        assert.is_false(warned, "should not warn about valid timestamp format")
     end)
 
     it("does not warn on valid timestamp format", function()

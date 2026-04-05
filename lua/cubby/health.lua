@@ -50,23 +50,19 @@ function M.check()
         end
     end
 
-    -- Check MRU state
-    if config.enable_recent_dirs then
-        local state_dir = vim.fn.fnamemodify(config.recent_state_file, ":h")
-        if vim.fn.isdirectory(state_dir) == 1 then
-            vim.health.ok("MRU state directory exists: " .. state_dir)
-        else
-            vim.health.info("MRU state directory will be created on first use: " .. state_dir)
-        end
-    else
-        vim.health.info("Recent directories feature is disabled")
-    end
-
     -- Validate timestamp format
-    local ts_mod = require("cubby.core.timestamp")
+    local naming_mod = require("cubby.naming")
     local sample = os.date(config.timestamp_fmt)
-    if sample:match("^" .. ts_mod.TIMESTAMP_PATTERN .. "$") then
-        vim.health.ok("Timestamp format is valid: " .. config.timestamp_fmt .. " → " .. sample)
+    if sample:match("^" .. naming_mod.TIMESTAMP_PATTERN .. "$") then
+        vim.health.ok(
+            "Timestamp format is valid: "
+                .. config.timestamp_fmt
+                .. " → "
+                .. sample
+                .. " (pattern: "
+                .. naming_mod.TIMESTAMP_PATTERN
+                .. ")"
+        )
     else
         vim.health.error(
             "Timestamp format produces unparseable output: " .. config.timestamp_fmt .. " → " .. sample,

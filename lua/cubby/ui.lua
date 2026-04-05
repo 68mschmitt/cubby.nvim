@@ -1,5 +1,8 @@
----@class cubby.ui.directory_picker
+---@class cubby.ui
 local M = {}
+
+local naming = require("cubby.naming")
+local fs = require("cubby.fs")
 
 ---Strip trailing slashes from a path.
 ---@param path string
@@ -56,19 +59,65 @@ local function sanitize_directory_name(name)
     return name
 end
 
+---Show an informational notification. Respects the `notify` config option.
+---@param msg string
+function M.info(msg)
+    local cfg = require("cubby.config").get()
+    if not cfg.notify then
+        return
+    end
+    vim.notify(msg, vim.log.levels.INFO)
+end
+
+---Show a warning notification. Always displayed regardless of config.
+---@param msg string
+function M.warn(msg)
+    vim.notify(msg, vim.log.levels.WARN)
+end
+
+---Show an error notification. Always displayed regardless of config.
+---@param msg string
+function M.error(msg)
+    vim.notify(msg, vim.log.levels.ERROR)
+end
+
+---Prompt the user for an optional descriptive label.
+---Sanitizes input and re-prompts on invalid labels.
+---@param callback fun(label: string?) Called with sanitized label, or nil if skipped
+function M.prompt_for_label(callback)
+    vim.ui.input({ prompt = "Enter a descriptive name (optional, press Enter to skip): " }, function(input)
+        if not input then
+            return
+        end
+
+        if input == "" then
+            callback(nil)
+            return
+        end
+
+        local sanitized = naming.sanitize_label(input)
+
+        if not naming.validate_label(sanitized) then
+            M.warn("Label invalid after sanitization. Try again or press Enter to skip.")
+            M.prompt_for_label(callback)
+            return
+        end
+
+        callback(sanitized)
+    end)
+end
+
 ---Show an interactive directory picker for choosing a destination.
 ---@param base_dir string Root directory (cannot navigate above this)
 ---@param current_path string Current directory being browsed
 ---@param exclude_dirs string[] Directories to exclude from listing
 ---@param callback fun(dir: string) Called with the chosen directory
 function M.show_directory_picker(base_dir, current_path, exclude_dirs, callback)
-    local directory = require("cubby.core.directory")
-
     current_path = current_path or base_dir
     current_path = normalize_path(current_path)
     base_dir = normalize_path(base_dir)
 
-    local subdirs = directory.list_subdirs(current_path, exclude_dirs)
+    local subdirs = fs.list_subdirs(current_path, exclude_dirs)
     local items = M.build_picker_items(base_dir, current_path, subdirs)
 
     local relative_path = get_relative_path(base_dir, current_path)
@@ -112,8 +161,6 @@ end
 ---@param exclude_dirs string[] Directories to exclude
 ---@param callback fun(dir: string) Called with the chosen directory
 function M.handle_picker_selection(choice, base_dir, current_path, exclude_dirs, callback)
-    local fs = require("cubby.core.fs")
-
     if choice == "← Go Back" then
         local parent = vim.fn.fnamemodify(current_path, ":h")
         M.show_directory_picker(base_dir, parent, exclude_dirs, callback)
@@ -133,9 +180,6 @@ end
 ---@param exclude_dirs string[] Directories to exclude
 ---@param callback fun(dir: string) Called with the chosen directory
 function M.create_new_directory(parent_path, base_dir, exclude_dirs, callback)
-    local fs = require("cubby.core.fs")
-    local notify = require("cubby.ui.notify")
-
     vim.ui.input({ prompt = "New directory name: " }, function(name)
         if not name or name == "" then
             M.show_directory_picker(base_dir, parent_path, exclude_dirs, callback)
@@ -144,13 +188,18 @@ function M.create_new_directory(parent_path, base_dir, exclude_dirs, callback)
 
         local sanitized = sanitize_directory_name(name)
         if not sanitized then
-            notify.warn("Invalid directory name. Try again.")
+            M.warn("Invalid directory name. Try again.")
             M.create_new_directory(parent_path, base_dir, exclude_dirs, callback)
             return
         end
 
         local new_path = fs.path_join(parent_path, sanitized)
-        fs.ensure_dir(new_path)
+        local ok, err = fs.ensure_dir(new_path)
+        if not ok then
+            M.warn("Failed to create directory: " .. tostring(err))
+            M.create_new_directory(parent_path, base_dir, exclude_dirs, callback)
+            return
+        end
 
         M.show_directory_picker(base_dir, new_path, exclude_dirs, callback)
     end)

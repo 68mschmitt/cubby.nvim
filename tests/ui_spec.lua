@@ -1,10 +1,10 @@
---- Tests for cubby.ui.directory_picker — Directory picker UI logic
-local picker = require("cubby.ui.directory_picker")
-local fs = require("cubby.core.fs")
+--- Tests for cubby.ui — UI components including directory picker and input prompts
+local ui_mod = require("cubby.ui")
+local fs = require("cubby.fs")
 
-describe("directory_picker.build_picker_items", function()
+describe("ui_mod.build_picker_items", function()
     it("includes subdirectories, Drop Here, and Create New", function()
-        local items = picker.build_picker_items("/base", "/base", { "alpha", "beta" })
+        local items = ui_mod.build_picker_items("/base", "/base", { "alpha", "beta" })
         assert.equals(4, #items)
         assert.equals("alpha", items[1])
         assert.equals("beta", items[2])
@@ -13,28 +13,28 @@ describe("directory_picker.build_picker_items", function()
     end)
 
     it("includes Go Back when not at base", function()
-        local items = picker.build_picker_items("/base", "/base/sub", { "child" })
+        local items = ui_mod.build_picker_items("/base", "/base/sub", { "child" })
         assert.equals(4, #items) -- child, Drop Here, Create New, Go Back
         assert.equals("child", items[1])
         assert.equals("← Go Back", items[4])
     end)
 
     it("excludes Go Back at base directory", function()
-        local items = picker.build_picker_items("/base", "/base", {})
+        local items = ui_mod.build_picker_items("/base", "/base", {})
         for _, item in ipairs(items) do
             assert.is_not.equals("← Go Back", item)
         end
     end)
 
     it("handles empty subdirectory list", function()
-        local items = picker.build_picker_items("/base", "/base", {})
+        local items = ui_mod.build_picker_items("/base", "/base", {})
         assert.equals(2, #items) -- Drop Here, Create New
         assert.equals("✓ Drop Here", items[1])
         assert.equals("+ Create New", items[2])
     end)
 
     it("normalizes trailing slashes for Go Back check", function()
-        local items = picker.build_picker_items("/base/", "/base", {})
+        local items = ui_mod.build_picker_items("/base/", "/base", {})
         -- Should NOT include Go Back since paths are equivalent
         for _, item in ipairs(items) do
             assert.is_not.equals("← Go Back", item)
@@ -42,10 +42,10 @@ describe("directory_picker.build_picker_items", function()
     end)
 end)
 
-describe("directory_picker.handle_picker_selection", function()
+describe("ui_mod.handle_picker_selection", function()
     it("calls callback with current_path for Drop Here", function()
         local result
-        picker.handle_picker_selection("✓ Drop Here", "/base", "/base/current", {}, function(dir)
+        ui_mod.handle_picker_selection("✓ Drop Here", "/base", "/base/current", {}, function(dir)
             result = dir
         end)
         assert.equals("/base/current", result)
@@ -63,7 +63,7 @@ describe("directory_picker.handle_picker_selection", function()
         vim.fn.mkdir(tmpdir, "p")
         vim.fn.mkdir(tmpdir .. "/child", "p")
 
-        picker.handle_picker_selection("child", tmpdir, tmpdir, {}, function() end)
+        ui_mod.handle_picker_selection("child", tmpdir, tmpdir, {}, function() end)
 
         assert.is_not_nil(called_prompt)
         -- Prompt should reference the child directory
@@ -84,7 +84,7 @@ describe("directory_picker.handle_picker_selection", function()
         vim.fn.mkdir(tmpdir, "p")
         vim.fn.mkdir(tmpdir .. "/child", "p")
 
-        picker.handle_picker_selection("← Go Back", tmpdir, tmpdir .. "/child", {}, function() end)
+        ui_mod.handle_picker_selection("← Go Back", tmpdir, tmpdir .. "/child", {}, function() end)
 
         assert.is_not_nil(called_prompt)
         -- Should be back at the base (prompt shows "/")
@@ -95,7 +95,7 @@ describe("directory_picker.handle_picker_selection", function()
     end)
 end)
 
-describe("directory_picker.create_new_directory", function()
+describe("ui_mod.create_new_directory", function()
     local tmpdir
 
     before_each(function()
@@ -119,7 +119,7 @@ describe("directory_picker.create_new_directory", function()
         -- After creating, show_directory_picker is called; stub it
         vim.ui.select = function(items, opts, on_choice) end
 
-        picker.create_new_directory(tmpdir, tmpdir, {}, function() end)
+        ui_mod.create_new_directory(tmpdir, tmpdir, {}, function() end)
 
         -- sanitize_directory_name replaces spaces with hyphens but preserves case
         assert.is_true(fs.dir_exists(tmpdir .. "/My-New-Dir"))
@@ -146,7 +146,7 @@ describe("directory_picker.create_new_directory", function()
         end
         vim.ui.select = function(items, opts, on_choice) end
 
-        picker.create_new_directory(tmpdir, tmpdir, {}, function() end)
+        ui_mod.create_new_directory(tmpdir, tmpdir, {}, function() end)
 
         assert.equals(2, call_count)
         assert.is_true(fs.dir_exists(tmpdir .. "/valid-name"))
@@ -169,7 +169,7 @@ describe("directory_picker.create_new_directory", function()
             select_called = true
         end
 
-        picker.create_new_directory(tmpdir, tmpdir, {}, function() end)
+        ui_mod.create_new_directory(tmpdir, tmpdir, {}, function() end)
 
         assert.is_true(select_called)
 
@@ -190,11 +190,100 @@ describe("directory_picker.create_new_directory", function()
             select_called = true
         end
 
-        picker.create_new_directory(tmpdir, tmpdir, {}, function() end)
+        ui_mod.create_new_directory(tmpdir, tmpdir, {}, function() end)
 
         assert.is_true(select_called)
 
         vim.ui.input = original_input
         vim.ui.select = original_select
+    end)
+end)
+
+describe("ui_mod.prompt_for_label", function()
+    it("passes nil when user presses Enter to skip", function()
+        local original_input = vim.ui.input
+        vim.ui.input = function(opts, on_confirm)
+            on_confirm("")
+        end
+
+        local result = "not_called"
+        ui_mod.prompt_for_label(function(label)
+            result = label
+        end)
+
+        assert.is_nil(result)
+        vim.ui.input = original_input
+    end)
+
+    it("passes sanitized label for valid input", function()
+        local original_input = vim.ui.input
+        vim.ui.input = function(opts, on_confirm)
+            on_confirm("My Cool Note")
+        end
+
+        local result
+        ui_mod.prompt_for_label(function(label)
+            result = label
+        end)
+
+        assert.equals("my-cool-note", result)
+        vim.ui.input = original_input
+    end)
+
+    it("does not call back when user cancels (nil input)", function()
+        local original_input = vim.ui.input
+        vim.ui.input = function(opts, on_confirm)
+            on_confirm(nil)
+        end
+
+        local called = false
+        ui_mod.prompt_for_label(function(label)
+            called = true
+        end)
+
+        assert.is_false(called)
+        vim.ui.input = original_input
+    end)
+
+    it("re-prompts when input sanitizes to empty", function()
+        local original_input = vim.ui.input
+        local original_notify = vim.notify
+        vim.notify = function() end
+
+        local call_count = 0
+        vim.ui.input = function(opts, on_confirm)
+            call_count = call_count + 1
+            if call_count == 1 then
+                on_confirm("!@#$%") -- sanitizes to empty
+            else
+                on_confirm("") -- skip on retry
+            end
+        end
+
+        local result = "not_called"
+        ui_mod.prompt_for_label(function(label)
+            result = label
+        end)
+
+        assert.equals(2, call_count)
+        assert.is_nil(result) -- skipped on retry
+
+        vim.ui.input = original_input
+        vim.notify = original_notify
+    end)
+
+    it("preserves digits in labels", function()
+        local original_input = vim.ui.input
+        vim.ui.input = function(opts, on_confirm)
+            on_confirm("Note 42")
+        end
+
+        local result
+        ui_mod.prompt_for_label(function(label)
+            result = label
+        end)
+
+        assert.equals("note-42", result)
+        vim.ui.input = original_input
     end)
 end)

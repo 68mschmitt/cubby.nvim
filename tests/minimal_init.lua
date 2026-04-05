@@ -26,7 +26,4 @@ require("cubby").setup({
     base_dir = test_tmp .. "/notes",
     notify = false,
     auto_save_new_note = true,
-    enable_recent_dirs = true,
-    max_recent_dirs = 5,
-    recent_state_file = test_tmp .. "/cubby-mru.json",
 })
