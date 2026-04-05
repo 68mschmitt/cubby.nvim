@@ -12,9 +12,6 @@ local M = {}
 ---@field trailing_marker string Filename suffix marker
 ---@field exclude_dirs string[] Directory names to exclude from picker
 ---@field allow_non_md boolean Allow sorting non-markdown files
----@field enable_recent_dirs boolean Enable recent destinations feature
----@field max_recent_dirs integer Number of recent destinations to remember
----@field recent_state_file string Path to the MRU state file
 
 ---@type cubby.Config
 local default_config = {
@@ -28,9 +25,6 @@ local default_config = {
     trailing_marker = "--note",
     exclude_dirs = { ".git", ".obsidian" },
     allow_non_md = true,
-    enable_recent_dirs = true,
-    max_recent_dirs = 5,
-    recent_state_file = vim.fn.stdpath("state") .. "/cubby-mru.json",
 }
 
 ---@type cubby.Config
@@ -39,9 +33,12 @@ local config = vim.deepcopy(default_config)
 ---Validate that the configured timestamp format produces parseable timestamps.
 ---@param cfg cubby.Config
 local function validate_timestamp_format(cfg)
-    local ts_mod = require("cubby.core.timestamp")
+    local naming_mod = require("cubby.naming")
+    -- Derive pattern from format (keeps them in sync)
+    naming_mod.update_timestamp_pattern(cfg.timestamp_fmt)
+
     local sample = os.date(cfg.timestamp_fmt)
-    if not sample:match("^" .. ts_mod.TIMESTAMP_PATTERN .. "$") then
+    if not sample:match("^" .. naming_mod.TIMESTAMP_PATTERN .. "$") then
         vim.notify(
             string.format(
                 "[cubby] timestamp_fmt %q produces %q which does not match the expected YYYY-MM-DD_HH-MM-SS pattern.\n"

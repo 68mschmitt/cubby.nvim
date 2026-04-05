@@ -12,7 +12,6 @@ A minimal Neovim plugin for quick note creation and organization. Capture though
 
 ### Direct Note Creation (`:CreateNote`)
 - **Create in Place**: Create notes directly in their final destination
-- **Recent Destinations**: Quick access to recently used directories
 - **Directory Drill-down**: Interactive navigation to choose location
 - **Optional Labeling**: Add descriptive names or skip for timestamp-only filenames
 - **Smart Naming**: Format becomes `{label}-{timestamp}--note.md` (or just `{timestamp}--note.md` if no label)
@@ -25,7 +24,6 @@ A minimal Neovim plugin for quick note creation and organization. Capture though
 - **Empty Inbox Detection**: Helpful message when inbox is empty
 
 ### Note Sorting (`:SortNote`)
-- **Recent Destinations**: Quick access to recently used directories
 - **Directory Drill-down**: Interactive navigation through your note structure
 - **Optional Labeling**: Add descriptive names or skip for timestamp-only filenames
 - **Timestamp Preservation**: Keeps original creation timestamp
@@ -81,11 +79,6 @@ require("cubby").setup({
   trailing_marker = "--note",                -- Filename suffix marker
   exclude_dirs = { ".git", ".obsidian" },   -- Directories to exclude from picker
   allow_non_md = true,                       -- Allow sorting non-markdown files
-
-  -- Recent Destinations (for CreateNote and SortNote)
-  enable_recent_dirs = true,                 -- Enable recent destinations feature
-  max_recent_dirs = 5,                       -- Number of recent destinations to remember
-  recent_state_file = vim.fn.stdpath("state") .. "/cubby-mru.json",
 })
 ```
 
@@ -98,7 +91,7 @@ require("cubby").setup({
 
 The `timestamp_fmt` option controls how timestamps appear in filenames. The default format `%Y-%m-%d_%H-%M-%S` produces timestamps like `2025-10-08_09-17-33`.
 
-**Important:** The plugin's filename parsing depends on the `YYYY-MM-DD_HH-MM-SS` pattern. Changing `timestamp_fmt` will break timestamp extraction from filenames, relative time display in `:ListInbox`, and timestamp preservation during `:SortNote`. Only change this if you understand the consequences.
+The plugin automatically derives the filename matching pattern from your format, so custom formats are supported. The health check (`:checkhealth cubby`) will verify your format works correctly.
 
 ## Usage
 
@@ -120,21 +113,17 @@ The `timestamp_fmt` option controls how timestamps appear in filenames. The defa
    - Select a note to open and review
    - See at a glance which notes need attention
 4. **Sort**: When ready, use `:SortNote` to:
-   - **Quick path**: Select from recent destinations
-   - **Full path**: Navigate through your directory structure
+   - Navigate through your directory structure
    - Choose a destination (or create new directories)
    - Optionally provide a descriptive label (or press Enter to skip)
    - File is automatically moved and renamed
 
 #### Create-In-Place (Known destination)
 1. **Create**: Use `:CreateNote` to create a note directly:
-   - **Quick path**: Select from recent destinations
-   - **Full path**: Navigate through your directory structure
+   - Navigate through your directory structure
    - Choose a destination (or create new directories)
    - Optionally provide a descriptive label (or press Enter to skip)
 2. **Edit**: Write your content in the final location
-
-**Recent Destinations**: The plugin remembers your last 5 used directories for both `:CreateNote` and `:SortNote`. Select a recent entry to skip directory navigation and go straight to the label prompt.
 
 ### Programmatic API
 
@@ -173,24 +162,6 @@ cubby.sort_note()
 - Label precedes timestamp for readability (when provided)
 - Collision handling with `--2`, `--3`, etc.
 
-## Recent Destinations
-
-The plugin tracks your most recently used directories when using `:CreateNote` and `:SortNote`. When you invoke these commands, you'll see:
-
-```
-Select destination:
-→ projects/miata (2 hours ago)
-→ journal (today)
-Browse directories...
-```
-
-**Benefits:**
-- Skip directory navigation for frequent destinations
-- Faster workflow for repeated destinations
-- Shared history between `:CreateNote` and `:SortNote`
-
-**Storage:** Recent destinations are stored locally in `~/.local/state/nvim/cubby-mru.json`
-
 ## Directory Navigation
 
 When browsing directories, you'll see:
@@ -208,7 +179,6 @@ When browsing directories, you'll see:
   - Thoughtful organization when ready
 - **Create in place**: `:CreateNote`
   - Direct creation when destination is known
-  - Recent destinations for fast repeated workflows
 - Timestamp preservation maintains creation history
 - Clean, predictable file naming for easy searching
 
