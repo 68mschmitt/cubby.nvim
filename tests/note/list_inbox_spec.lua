@@ -155,30 +155,139 @@ describe("list_inbox", function()
         vim.ui.select = original_select
     end)
 
-    it("includes all files when allow_non_md is true", function()
-        config.setup({
-            inbox_dir = tmpdir,
-            base_dir = tmpdir,
-            file_ext = ".md",
-            notify = false,
-            allow_non_md = true,
-            enable_recent_dirs = false,
-        })
+     it("includes all files when allow_non_md is true", function()
+         config.setup({
+             inbox_dir = tmpdir,
+             base_dir = tmpdir,
+             file_ext = ".md",
+             notify = false,
+             allow_non_md = true,
+             enable_recent_dirs = false,
+         })
 
-        fs.write_file(tmpdir .. "/2025-10-08_09-17-33--note.md", "markdown")
-        fs.write_file(tmpdir .. "/2025-10-09_10-00-00--note.txt", "text")
+         fs.write_file(tmpdir .. "/2025-10-08_09-17-33--note.md", "markdown")
+         fs.write_file(tmpdir .. "/2025-10-09_10-00-00--note.txt", "text")
 
-        local original_select = vim.ui.select
-        local picker_items = nil
-        vim.ui.select = function(items, opts, on_choice)
-            picker_items = items
-        end
+         local original_select = vim.ui.select
+         local picker_items = nil
+         vim.ui.select = function(items, opts, on_choice)
+             picker_items = items
+         end
 
-        list_inbox_mod.list_inbox({})
+         list_inbox_mod.list_inbox({})
 
-        assert.is_not_nil(picker_items)
-        assert.equals(2, #picker_items)
+         assert.is_not_nil(picker_items)
+         assert.equals(2, #picker_items)
 
-        vim.ui.select = original_select
-    end)
+         vim.ui.select = original_select
+     end)
+
+     it("includes first non-empty line as preview in display", function()
+         fs.write_file(tmpdir .. "/2025-01-01_00-00-00--note.md", "My important thought\nMore content")
+
+         local original_select = vim.ui.select
+         local picker_items = nil
+         vim.ui.select = function(items, opts, on_choice)
+             picker_items = items
+         end
+
+         list_inbox_mod.list_inbox({})
+
+         assert.is_not_nil(picker_items)
+         assert.equals(1, #picker_items)
+         assert.truthy(picker_items[1]:find("My important thought", 1, true), "should contain preview text")
+         assert.truthy(picker_items[1]:find("—", 1, true), "should contain em-dash separator")
+
+         vim.ui.select = original_select
+     end)
+
+     it("skips blank lines to find first non-empty line for preview", function()
+         fs.write_file(tmpdir .. "/2025-01-01_00-00-00--note.md", "\n\n\nActual content here")
+
+         local original_select = vim.ui.select
+         local picker_items = nil
+         vim.ui.select = function(items, opts, on_choice)
+             picker_items = items
+         end
+
+         list_inbox_mod.list_inbox({})
+
+         assert.is_not_nil(picker_items)
+         assert.truthy(picker_items[1]:find("Actual content here", 1, true), "should find content past blank lines")
+
+         vim.ui.select = original_select
+     end)
+
+     it("omits preview separator for empty files", function()
+         fs.write_file(tmpdir .. "/2025-01-01_00-00-00--note.md", "")
+
+         local original_select = vim.ui.select
+         local picker_items = nil
+         vim.ui.select = function(items, opts, on_choice)
+             picker_items = items
+         end
+
+         list_inbox_mod.list_inbox({})
+
+         assert.is_not_nil(picker_items)
+         assert.equals(1, #picker_items)
+         assert.falsy(picker_items[1]:find("—", 1, true), "should not have em-dash for empty file")
+
+         vim.ui.select = original_select
+     end)
+
+     it("omits preview separator for whitespace-only files", function()
+         fs.write_file(tmpdir .. "/2025-01-01_00-00-00--note.md", "\n\n   \n\t\n")
+
+         local original_select = vim.ui.select
+         local picker_items = nil
+         vim.ui.select = function(items, opts, on_choice)
+             picker_items = items
+         end
+
+         list_inbox_mod.list_inbox({})
+
+         assert.is_not_nil(picker_items)
+         assert.equals(1, #picker_items)
+         assert.falsy(picker_items[1]:find("—", 1, true), "should not have em-dash for whitespace-only file")
+
+         vim.ui.select = original_select
+     end)
+
+     it("truncates long preview lines", function()
+         local long_line = string.rep("a", 80)
+         fs.write_file(tmpdir .. "/2025-01-01_00-00-00--note.md", long_line)
+
+         local original_select = vim.ui.select
+         local picker_items = nil
+         vim.ui.select = function(items, opts, on_choice)
+             picker_items = items
+         end
+
+         list_inbox_mod.list_inbox({})
+
+         assert.is_not_nil(picker_items)
+         assert.truthy(picker_items[1]:find("…", 1, true), "should have ellipsis for truncated preview")
+         -- The full 80-char line should NOT appear
+         assert.falsy(picker_items[1]:find(long_line, 1, true), "should not contain full untruncated line")
+
+         vim.ui.select = original_select
+     end)
+
+     it("preserves markdown header in preview", function()
+         fs.write_file(tmpdir .. "/2025-01-01_00-00-00--note.md", "# My Note Title\nSome content")
+
+         local original_select = vim.ui.select
+         local picker_items = nil
+         vim.ui.select = function(items, opts, on_choice)
+             picker_items = items
+         end
+
+         list_inbox_mod.list_inbox({})
+
+         assert.is_not_nil(picker_items)
+         assert.truthy(picker_items[1]:find("# My Note Title", 1, true), "should preserve markdown syntax in preview")
+
+         vim.ui.select = original_select
+     end)
 end)

@@ -53,4 +53,26 @@ function M.path_join(...)
     return result
 end
 
+---Read the first non-empty line from a file.
+---A line is non-empty if it contains at least one non-whitespace character.
+---Stops reading at the first match — does not read the entire file.
+---@param filepath string Path to the file
+---@return string|nil line Trimmed first non-empty line, or nil
+---@return string|nil err Error message if file cannot be opened
+function M.read_first_nonempty_line(filepath)
+    local f, err = io.open(filepath, "r")
+    if not f then
+        return nil, err
+    end
+    for line in f:lines() do
+        local trimmed = line:match("^%s*(.-)%s*$")
+        if trimmed ~= "" then
+            f:close()
+            return trimmed, nil
+        end
+    end
+    f:close()
+    return nil, nil
+end
+
 return M

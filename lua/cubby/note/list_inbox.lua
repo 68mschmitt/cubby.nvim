@@ -6,6 +6,7 @@ local M = {}
 ---@field filename string Filename only
 ---@field timestamp integer Unix epoch timestamp
 ---@field relative_time string Human-readable relative time
+---@field preview string|nil First non-empty line of content, truncated
 ---@field display_text string Formatted display string
 
 ---Scan the inbox directory for note files.
@@ -42,10 +43,27 @@ local function scan_inbox_files(inbox_dir, file_ext, allow_non_md)
     return files
 end
 
+-- 60 chars keeps the picker scannable across terminal widths
+local MAX_PREVIEW_LEN = 60
+
+---Truncate a preview line to fit in the picker display.
+---@param line string|nil Raw first line from file
+---@return string|nil preview Truncated preview, or nil if no content
+local function format_preview(line)
+    if not line or line == "" then
+        return nil
+    end
+    if #line > MAX_PREVIEW_LEN then
+        return line:sub(1, MAX_PREVIEW_LEN - 1) .. "…"
+    end
+    return line
+end
+
 ---Extract display metadata from a note file path.
 ---@param filepath string Full file path
 ---@return cubby.InboxNote
 local function extract_note_metadata(filepath)
+    local fs = require("cubby.core.fs")
     local timestamp_mod = require("cubby.core.timestamp")
     local time = require("cubby.core.time")
 
@@ -64,13 +82,23 @@ local function extract_note_metadata(filepath)
     end
 
     local relative_time = time.format_relative_time(unix_timestamp)
-    local display_text = string.format("[%s] %s", relative_time, fname)
+
+    local raw_preview, _ = fs.read_first_nonempty_line(filepath)
+    local preview = format_preview(raw_preview)
+
+    local display_text
+    if preview then
+        display_text = string.format("[%s] %s — %s", relative_time, fname, preview)
+    else
+        display_text = string.format("[%s] %s", relative_time, fname)
+    end
 
     return {
         filepath = filepath,
         filename = fname,
         timestamp = unix_timestamp,
         relative_time = relative_time,
+        preview = preview,
         display_text = display_text,
     }
 end
